@@ -6,6 +6,7 @@ pub struct AnimeEpisode {
     id: u16,
     anime_id: u16,
     episode: u16,
+    episode2: u16,
     edition: String,
     title: String,
     #[serde(alias = "snapshot")]

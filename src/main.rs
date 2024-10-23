@@ -192,8 +192,13 @@ async fn main() {
     //Combines all the m3u8 information to make the m3u8 url
     let m3u8_url = "https:".to_owned() + m3u8_url_info_parts[0] + "/stream/"+m3u8_url_info_parts[1]+"/"
         +m3u8_url_info_parts[2]+"/"+m3u8_url_info_parts[3]+"/uwu.m3u8";
-    print!("{}", &m3u8_url);
+    println!("{}", &m3u8_url);
 
+    let mut folder_location:String = String::new();
+    println!("Enter the location where you would like to save the file");
+    io::stdin().read_line(&mut folder_location).expect("Error: Read line failed.");
+    folder_location = folder_location.trim_end().to_string();
+    println!("{}\\{}_{}", folder_location,chosen_anime.title().replace(" ", "_"),chosen_episode.episode().to_string());
 
     // Creates a Command that run ffmpeg to download the episode or episodes selected
     let output = Command::new("ffmpeg")
@@ -201,7 +206,7 @@ async fn main() {
         .arg(&m3u8_url)
         .arg("-c")
         .arg("copy")
-        .arg("C:\\Users\\Moh\\Videos\\Jujutsu.mkv")
+        .arg(folder_location+"\\"+ &*chosen_anime.title().replace(" ", "_")+"_"+ &*chosen_episode.episode().to_string()+".mkv")
         .spawn()
         .expect("Error : FFMPEG command failed to start");
 
