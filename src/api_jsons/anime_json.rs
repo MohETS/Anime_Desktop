@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::anime::Anime;
+use crate::models::Anime;
 
 #[derive(Serialize, Deserialize,Default, Debug)]
 #[serde(default)]
@@ -8,7 +8,7 @@ pub struct AnimeJson {
 }
 
 impl AnimeJson {
-    pub fn data(&self) -> &Vec<Anime> {
-        &self.data
+    pub fn data(self) -> Vec<Anime> {
+        self.data
     }
 }

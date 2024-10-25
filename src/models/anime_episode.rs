@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize,Default, Debug)]
 #[serde(default)]
 pub struct AnimeEpisode {
-    id: u16,
+    id: u32,
     anime_id: u16,
     episode: u16,
     episode2: u16,
@@ -20,7 +20,7 @@ pub struct AnimeEpisode {
 }
 
 impl AnimeEpisode {
-    pub fn id(&self) -> u16 {
+    pub fn id(&self) -> u32 {
         self.id
     }
 

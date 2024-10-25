@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize,Default, Debug)]
+#[derive(Serialize, Deserialize, Default, Debug)]
 #[serde(default)]
 pub struct Anime {
     #[serde(alias = "session")]
@@ -59,3 +59,4 @@ impl Anime {
         self.score
     }
 }
+
