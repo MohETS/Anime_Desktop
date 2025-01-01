@@ -1,17 +1,15 @@
+use radix_fmt::radix;
 use reqwest::header::REFERER;
 use reqwest::Client;
 use scraper::{Html, Selector};
 
 pub struct KwikApi {
     client: Client,
-    m3u8_url_info_parts: Vec<String>,
 }
 impl KwikApi {
     pub fn new(client: Client) -> Self {
         KwikApi {
             client
-            ,
-            m3u8_url_info_parts: Vec::new(),
         }
     }
 
@@ -19,25 +17,11 @@ impl KwikApi {
         let search_response = self.client.get(kwik_url)
             .header(REFERER, "https://animepahe.ru/")
             .send().await.unwrap().text().await.unwrap();
-        self.get_m3u8_url_info(search_response);
-        println!("{:?}", self.m3u8_url_info_parts);
-        "https:".to_owned() + &*self.m3u8_url_info_parts[0] + "/stream/" + &*self.m3u8_url_info_parts[1] + "/"
-            + &*self.m3u8_url_info_parts[2] + "/" + &*self.m3u8_url_info_parts[3] + "/uwu.m3u8"
-    }
 
-    fn get_m3u8_url_info(&mut self, search_response: String) {
-        let fragment = Html::parse_fragment(&*search_response);
-        let mut selector = Selector::parse("link").unwrap();
-        for element in fragment.select(&selector) {
-            if element.attr("rel").unwrap().eq("preconnect") && element.attr("href").unwrap().contains("nextcdn.org") {
-                self.m3u8_url_info_parts.push(element.attr("href").unwrap().to_string());
-                self.m3u8_url_info_parts.push(element.attr("href").unwrap()[5..7].to_string());
-                break;
-            }
-        }
-
-        selector = Selector::parse("script").unwrap();
         let mut m3u8_url_info = String::new();
+        let fragment = Html::parse_fragment(&*search_response);
+        let selector = Selector::parse("script").unwrap();
+
         for element in fragment.select(&selector) {
             if !element.text().collect::<Vec<_>>().is_empty() {
                 m3u8_url_info = element.text().collect::<Vec<_>>().get(0).unwrap().to_string();
@@ -45,23 +29,55 @@ impl KwikApi {
             }
         }
 
-        let value_position_checker = "/1D/1C/1B.1A";
         m3u8_url_info = m3u8_url_info[1783..m3u8_url_info.len()].to_string();
-        let m3u8_url_info_length: usize = m3u8_url_info.len();
 
-        /** Checks if the kwik contains the String value_position_checker
-                        * If it's true the value is at the end with the episode's code
-                        * If not that means the value is at the start
-        */
-        if m3u8_url_info.contains(value_position_checker) {
-            let string = &m3u8_url_info[(m3u8_url_info_length - 121)..(m3u8_url_info_length - 54)];
+        let mut temp = m3u8_url_info.split(";',").collect::<Vec<&str>>();
 
-            let temp = &mut string.split("|").collect::<Vec<&str>>();
-            self.m3u8_url_info_parts.push(temp[1].to_string());
-            self.m3u8_url_info_parts.push(temp[0].to_string());
+        let mut p: &str = &temp[0][8..];
+        if p.contains("1J/H") {
+            p = &p[0..32];
         } else {
-            self.m3u8_url_info_parts.push(m3u8_url_info[34..36].to_string());
-            self.m3u8_url_info_parts.push(m3u8_url_info[(m3u8_url_info_length - 118)..(m3u8_url_info_length - 54)].to_string());
+            p = p[0..34].trim_matches(';').trim_matches('\'').trim_matches('\\');
         }
+
+        temp = temp[1].split(",").collect::<Vec<&str>>();
+        let a: usize = temp[0].parse::<usize>().unwrap();
+        let c: usize = temp[1].parse::<usize>().unwrap();
+        let k: Vec<&str> = temp[2][1..(temp[2].len() - 12)].split("|").collect();
+        let link = Self::animepahe_link_parser(p, c, a, k);
+
+        link
+    }
+
+    /** Method from Animepahe.ru to get the episode's .m3u8 link converted in Rust **/
+    pub fn animepahe_link_parser(p: &str, mut c: usize, a: usize, k: Vec<&str>) -> String {
+        let mut link = p.to_string();
+
+        while c > 0 {
+            c -= 1;
+            if !k[c].is_empty() {
+                let regex = regex::Regex::new(&format!(r"\b{}\b", Self::e(c, a)));
+                link = regex.unwrap().replace_all(&link, k[c]).to_string();
+            }
+        }
+
+        link
+    }
+
+    fn e(c: usize, a: usize) -> String {
+        let mut result: String = String::new();
+
+        if c < a {} else {
+            result = Self::e(c / a, a);
+        }
+
+        let c = c % a;
+        if c > 35 {
+            result = result + &*std::char::from_u32((c + 29) as u32).unwrap().to_string();
+        } else {
+            result = result + &*radix(c, 36).to_string();
+        }
+
+        result
     }
 }

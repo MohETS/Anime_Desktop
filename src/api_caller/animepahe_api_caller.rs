@@ -12,7 +12,7 @@ impl AnimepaheApi {
     }
 
 
-    pub async fn get_searched_animes(&self, anime_name: &String) -> Vec<Anime> {
+    pub async fn get_searched_anime_results(&self, anime_name: &String) -> Vec<Anime> {
         let search_response = self.client.get("https://animepahe.ru/api?m=search".to_owned() + "&q=" + &*urlencoding::encode(&anime_name) + "")
             .send().await.unwrap().text().await.unwrap();
         let search_json: AnimeJson = serde_json::from_str(&*search_response).unwrap();
